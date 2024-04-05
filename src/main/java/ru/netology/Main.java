@@ -1,5 +1,9 @@
 package ru.netology;
 
+import ru.netology.Logger.FileLogger;
+import ru.netology.Logger.Logger;
+import ru.netology.Logger.LoggerEnum;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,9 +13,10 @@ import java.util.Map;
 public class Main {
     private static final int STANDART_PORT = 8988;
     private static final Map<String, PrintWriter> clientList = new HashMap<>();
+    private static boolean isRunning = true;
 
     public static void main(String[] args) {
-        Logger logger = new Logger();
+        Logger logger = new FileLogger();
         File settings = new File("settings.txt");
 
         int serverPort = settingsCreate(settings, logger);
@@ -32,22 +37,8 @@ public class Main {
                         logger.log(String.format("Соединение с %d принято", clientSocket.getPort()), LoggerEnum.MESSAGE, true);
 
                         new Thread(() -> {
-                            boolean isRunning = true;
                             while (isRunning) {
-                                try {
-                                    final String clientName = in.readLine();
-                                    final String message = in.readLine();
-
-                                    for (String keyName : clientList.keySet()) {
-                                        if (!(keyName.equals(clientName))) {
-                                            clientList.get(keyName).println(message);
-                                        }
-                                    }
-                                    logger.log(message, LoggerEnum.MESSAGE, true);
-                                } catch (IOException e) {
-                                    logger.log("Не удалось получить сообщение: Возможно, пользователь отключился от сервера", LoggerEnum.WARN, true);
-                                    isRunning = false;
-                                }
+                                sendMessage(in, logger);
                             }
                         }).start();
                     } catch (IOException e) {
@@ -57,6 +48,23 @@ public class Main {
             }).start();
         } else {
             logger.log("Ошибка при запуске сервера: Порт введён не верно", LoggerEnum.ERROR, true);
+        }
+    }
+
+    private static void sendMessage(BufferedReader in, Logger logger) {
+        try {
+            final String clientName = in.readLine();
+            final String message = in.readLine();
+
+            for (String keyName : Main.clientList.keySet()) {
+                if (!(keyName.equals(clientName))) {
+                    Main.clientList.get(keyName).println(message);
+                }
+            }
+            logger.log(message, LoggerEnum.MESSAGE, true);
+        } catch (IOException e) {
+            logger.log("Не удалось получить сообщение: Возможно, пользователь отключился от сервера", LoggerEnum.WARN, true);
+            isRunning = false;
         }
     }
 
