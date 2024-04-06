@@ -13,8 +13,6 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import static ru.netology.Main.settingsCreate;
 
 class MainTest {
